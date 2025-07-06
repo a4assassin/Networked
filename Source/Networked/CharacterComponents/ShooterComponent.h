@@ -20,10 +20,13 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
+	void SetHUDCrosshairs(float DeltaTime);
 private:
 
 	class AShooterCharacter* ShooterCharacter;
+	class AShooterHUD* ShooterHUD;
+	class AShooterPlayerController* ShooterPlayerController;
+
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponEquipped)
 	class AWeapon* EquippedWeapon;
 
@@ -58,4 +61,6 @@ private:
 	void TraceHit(FHitResult& HitResult);
 	
 	FVector HitPoint;
+	float CrosshairVelocityFactor = 0.f;
+	float CrosshairJumpFactor = 0.f;
 };

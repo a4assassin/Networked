@@ -10,6 +10,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "Networked/Characters/ShooterCharacter.h"
+#include "Networked/Characters/ShooterPlayerController.h"
+#include "Networked/HUD/ShooterHUD.h"
 
 UShooterComponent::UShooterComponent()
 {
@@ -24,6 +26,62 @@ void UShooterComponent::BeginPlay()
 	Super::BeginPlay();
 
 	
+}
+
+void UShooterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	SetHUDCrosshairs(DeltaTime);
+}
+
+void UShooterComponent::SetHUDCrosshairs(float DeltaTime)
+{
+	if (ShooterCharacter == nullptr || ShooterCharacter->Controller == nullptr) return;
+
+	ShooterPlayerController = ShooterPlayerController == nullptr ? Cast<AShooterPlayerController>(ShooterCharacter->Controller) : ShooterPlayerController;
+	if (ShooterPlayerController)
+	{
+		ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(ShooterPlayerController->GetHUD()) : ShooterHUD;
+		if (ShooterHUD)
+		{
+			FHUDPack HUDPack;
+			if (EquippedWeapon)
+			{
+				HUDPack.CrosshairsCenter = EquippedWeapon->CrosshairsCenter;
+				HUDPack.CrosshairsLeft = EquippedWeapon->CrosshairsLeft;
+				HUDPack.CrosshairsRight = EquippedWeapon->CrosshairsRight;
+				HUDPack.CrosshairsBottom = EquippedWeapon->CrosshairsBottom;
+				HUDPack.CrosshairsTop = EquippedWeapon->CrosshairsTop;
+			}
+			else
+			{
+				HUDPack.CrosshairsCenter = nullptr;
+				HUDPack.CrosshairsLeft = nullptr;
+				HUDPack.CrosshairsRight = nullptr;
+				HUDPack.CrosshairsBottom = nullptr;
+				HUDPack.CrosshairsTop = nullptr;
+			}
+
+			FVector2D WalkSpeedRange(0.f, ShooterCharacter->GetCharacterMovement()->MaxWalkSpeed);
+			FVector2D VelocityMultiplierRange(0.f, 1.f);
+			FVector Velocity = FVector(ShooterCharacter->GetVelocity().X, ShooterCharacter->GetVelocity().Y, 0.f);
+
+			CrosshairVelocityFactor = FMath::GetMappedRangeValueClamped(WalkSpeedRange, VelocityMultiplierRange, Velocity.Size());
+
+			if (ShooterCharacter->GetCharacterMovement()->IsFalling())
+			{
+				CrosshairJumpFactor = FMath::FInterpTo(CrosshairJumpFactor, 2.f, DeltaTime, 8.f);
+			}
+			else
+			{
+				CrosshairJumpFactor = FMath::FInterpTo(CrosshairJumpFactor, 0.f, DeltaTime, 20.f);
+			}
+
+			HUDPack.CalcCrosshairSpread = CrosshairVelocityFactor + CrosshairJumpFactor;
+			ShooterHUD->SetHUDPack(HUDPack);
+		}
+	}
+
 }
 
 void UShooterComponent::Equip(AWeapon* Weapon)
@@ -121,10 +179,7 @@ void UShooterComponent::Server_SetAiming_Implementation(bool bInIsAiming)
 
 
 
-void UShooterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
+
 
 void UShooterComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
