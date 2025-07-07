@@ -60,9 +60,16 @@ void UShooterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		LeftHandTransformOnWeapon = ShooterCharacter->GetEquippedWeapon()->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
 		FVector OutLocation;
 		FRotator OutRotator;
-		ShooterCharacter->GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransformOnWeapon.GetLocation(), FRotator::ZeroRotator, OutLocation, OutRotator);
+		ShooterCharacter->GetMesh()->TransformToBoneSpace(FName("Hand_R"), LeftHandTransformOnWeapon.GetLocation(), FRotator::ZeroRotator, OutLocation, OutRotator);
 		LeftHandTransformOnWeapon.SetLocation(OutLocation);
 		LeftHandTransformOnWeapon.SetRotation(FQuat(OutRotator));
-	
+		
+		if (ShooterCharacter->IsLocallyControlled())
+		{
+			bLocallyControlled = true;
+			FTransform RightHandTransform = ShooterCharacter->GetMesh()->GetSocketTransform(FName("Hand_R"), ERelativeTransformSpace::RTS_World);
+			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - ShooterCharacter->GetHitTargetPoint()));
+		
+		}
 	}
 }

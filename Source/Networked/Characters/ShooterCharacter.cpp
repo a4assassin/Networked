@@ -181,6 +181,13 @@ void AShooterCharacter::PlayFire(bool isAiming)
 	}
 }
 
+FVector AShooterCharacter::GetHitTargetPoint() const
+{
+	if (ShooterComponent == nullptr)
+		return FVector();
+	return ShooterComponent->HitPoint;
+}
+
 void AShooterCharacter::Moveforward(float Scale)
 {
 	if (Controller != nullptr && Scale != 0.f)

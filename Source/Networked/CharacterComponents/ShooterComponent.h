@@ -59,8 +59,18 @@ private:
 	void MulticastFire(const FVector_NetQuantize& HitLocation);
 
 	void TraceHit(FHitResult& HitResult);
+	void InterpFOV(float DeltaTime);
 	
 	FVector HitPoint;
 	float CrosshairVelocityFactor = 0.f;
 	float CrosshairJumpFactor = 0.f;
+
+	float DefaultFOV;
+	float CurrentFOV;
+
+	UPROPERTY(EditAnyWhere, Category = Combat)
+	float ZoomFOV = 35.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float ZoomInterpSpeed = 20.f;
 };

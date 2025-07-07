@@ -12,6 +12,7 @@
 #include "Networked/Characters/ShooterCharacter.h"
 #include "Networked/Characters/ShooterPlayerController.h"
 #include "Networked/HUD/ShooterHUD.h"
+#include "Camera/CameraComponent.h"
 
 UShooterComponent::UShooterComponent()
 {
@@ -24,14 +25,32 @@ UShooterComponent::UShooterComponent()
 void UShooterComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+	if (ShooterCharacter)
+	{
+		ShooterCharacter->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+		if(ShooterCharacter->GetFollowCamera())
+		{
+			DefaultFOV = ShooterCharacter->GetFollowCamera()->FieldOfView;
+			CurrentFOV = DefaultFOV;
+		}
+			
+	}
 	
 }
 
 void UShooterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	SetHUDCrosshairs(DeltaTime);
+	
+
+	if (ShooterCharacter && ShooterCharacter->IsLocallyControlled())
+	{
+			FHitResult HitResult;
+			TraceHit(HitResult);
+			HitPoint = HitResult.ImpactPoint;
+			SetHUDCrosshairs(DeltaTime);
+			InterpFOV(DeltaTime);
+	}
 }
 
 void UShooterComponent::SetHUDCrosshairs(float DeltaTime)
@@ -153,6 +172,27 @@ void UShooterComponent::TraceHit(FHitResult& HitResult)
 		{
 			//HitPoint = HitResult.ImpactPoint;
 			//DrawDebugBox(GetWorld(), HitPoint, FVector(20.f), FColor::Green);
+		}
+	}
+}
+
+void UShooterComponent::InterpFOV(float DeltaTime)
+{
+
+	if (EquippedWeapon)
+	{
+		if (isAiming)
+		{
+			CurrentFOV = FMath::FInterpTo(CurrentFOV, EquippedWeapon->ZoomFOV, DeltaTime, EquippedWeapon->ZoomInterpSpeed);
+		}
+		else
+		{
+			CurrentFOV = FMath::FInterpTo(CurrentFOV, DefaultFOV, DeltaTime, ZoomInterpSpeed);
+		}
+
+		if (ShooterCharacter && ShooterCharacter->GetFollowCamera())
+		{
+			ShooterCharacter->GetFollowCamera()->SetFieldOfView(CurrentFOV);
 		}
 	}
 }
