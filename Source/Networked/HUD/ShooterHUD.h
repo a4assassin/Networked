@@ -21,6 +21,7 @@ public:
 	UTexture2D* CrosshairsTop;
 	UTexture2D* CrosshairsBottom;
 	float CalcCrosshairSpread = 0.f;
+	FLinearColor CrosshairColor;
 };
 
 UCLASS()
@@ -35,5 +36,5 @@ private:
 	FHUDPack HUDPack;
 	float CrosshairSpreadMAX = 15.f;
 
-	void DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCenter, FVector2D Spread);
+	void DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCenter, FVector2D Spread, FLinearColor CrosshairColor);
 };

@@ -5,10 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Networked/TurnType.h"
+#include "Networked/Interfaces/CrosshairInterface.h"
 #include "ShooterCharacter.generated.h"
 
 UCLASS()
-class NETWORKED_API AShooterCharacter : public ACharacter
+class NETWORKED_API AShooterCharacter : public ACharacter, public ICrosshairInterface
 {
 	GENERATED_BODY()
 private:
@@ -27,6 +28,11 @@ private:
 
 	void SetAimOffsets(float DeltaTime);
 	void ApplyTurnInPlace(float DeltaTime);
+	void HideCameraIfCharacterClose();
+
+	UPROPERTY(EditAnywhere)
+	float CameraDistanceThreshold = 200.f;
+
 	ETurnType TurnInPlace;
 
 protected:

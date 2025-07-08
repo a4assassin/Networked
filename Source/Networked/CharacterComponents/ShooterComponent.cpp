@@ -11,7 +11,6 @@
 #include "DrawDebugHelpers.h"
 #include "Networked/Characters/ShooterCharacter.h"
 #include "Networked/Characters/ShooterPlayerController.h"
-#include "Networked/HUD/ShooterHUD.h"
 #include "Camera/CameraComponent.h"
 
 UShooterComponent::UShooterComponent()
@@ -33,9 +32,7 @@ void UShooterComponent::BeginPlay()
 			DefaultFOV = ShooterCharacter->GetFollowCamera()->FieldOfView;
 			CurrentFOV = DefaultFOV;
 		}
-			
 	}
-	
 }
 
 void UShooterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -63,7 +60,6 @@ void UShooterComponent::SetHUDCrosshairs(float DeltaTime)
 		ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(ShooterPlayerController->GetHUD()) : ShooterHUD;
 		if (ShooterHUD)
 		{
-			FHUDPack HUDPack;
 			if (EquippedWeapon)
 			{
 				HUDPack.CrosshairsCenter = EquippedWeapon->CrosshairsCenter;
@@ -96,7 +92,19 @@ void UShooterComponent::SetHUDCrosshairs(float DeltaTime)
 				CrosshairJumpFactor = FMath::FInterpTo(CrosshairJumpFactor, 0.f, DeltaTime, 20.f);
 			}
 
-			HUDPack.CalcCrosshairSpread = CrosshairVelocityFactor + CrosshairJumpFactor;
+
+			if (isAiming)
+			{
+				CrosshairAimingFactor = FMath::FInterpTo(CrosshairAimingFactor, 0.5f, DeltaTime, 30.f);
+			}
+			else
+			{
+				CrosshairAimingFactor = FMath::FInterpTo(CrosshairAimingFactor, 0.f, DeltaTime, 30.f);
+			}
+
+			CrosshairShootingFactor = FMath::FInterpTo(CrosshairShootingFactor, 0.f, DeltaTime, 40.f);
+
+			HUDPack.CalcCrosshairSpread = CrosshairVelocityFactor + CrosshairJumpFactor - CrosshairAimingFactor + CrosshairShootingFactor;
 			ShooterHUD->SetHUDPack(HUDPack);
 		}
 	}
@@ -143,6 +151,11 @@ void UShooterComponent::FirePressed(bool bIsPressed)
 		FHitResult HitResult;
 		TraceHit(HitResult);
 		ServerFire(HitResult.ImpactPoint);
+
+		if (EquippedWeapon)
+		{
+			CrosshairShootingFactor = 0.7f;
+		}
 	}
 }
 
@@ -160,18 +173,21 @@ void UShooterComponent::TraceHit(FHitResult& HitResult)
 	if (isDeprojectSuccess)
 	{
 		FVector Start = WorldPosition;
+		if (ShooterCharacter)
+		{
+			float Distance = (ShooterCharacter->GetActorLocation() - Start).Size();
+			Start += WorldDirection * (Distance + 75.f);
+		}
 		FVector End = Start + WorldDirection * 10000.f;
 		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility);
 
-		if (!HitResult.bBlockingHit)
+		if (HitResult.GetActor() && HitResult.GetActor()->Implements<UCrosshairInterface>())
 		{
-			HitResult.ImpactPoint = End;
-			//HitPoint = End;
+			HUDPack.CrosshairColor = FLinearColor::Green;
 		}
 		else
 		{
-			//HitPoint = HitResult.ImpactPoint;
-			//DrawDebugBox(GetWorld(), HitPoint, FVector(20.f), FColor::Green);
+			HUDPack.CrosshairColor = FLinearColor::White;
 		}
 	}
 }
@@ -216,10 +232,6 @@ void UShooterComponent::Server_SetAiming_Implementation(bool bInIsAiming)
 	if (ShooterCharacter)
 		ShooterCharacter->GetCharacterMovement()->MaxWalkSpeed = isAiming ? AimWalkSpeed : BaseWalkSpeed;
 }
-
-
-
-
 
 void UShooterComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Networked/HUD/ShooterHUD.h"
 #include "ShooterComponent.generated.h"
 
 
@@ -62,8 +63,12 @@ private:
 	void InterpFOV(float DeltaTime);
 	
 	FVector HitPoint;
+	FHUDPack HUDPack;
+
 	float CrosshairVelocityFactor = 0.f;
 	float CrosshairJumpFactor = 0.f;
+	float CrosshairAimingFactor = 0.f;
+	float CrosshairShootingFactor = 0.f;
 
 	float DefaultFOV;
 	float CurrentFOV;

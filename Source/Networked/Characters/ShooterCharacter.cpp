@@ -5,6 +5,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Networked/Weapons/Weapon.h"
 #include "Networked/CharacterComponents/ShooterComponent.h"
@@ -32,6 +33,10 @@ AShooterCharacter::AShooterCharacter()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+
 	TurnInPlace = ETurnType::ETT_NoTurn;
 }
 
@@ -46,7 +51,7 @@ void AShooterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	SetAimOffsets(DeltaTime);
-	
+	HideCameraIfCharacterClose();
 }
 
 void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -88,7 +93,7 @@ void AShooterCharacter::SetAimOffsets(float DeltaTime)
 		FVector Velocity = GetVelocity();
 		float Speed = FVector(Velocity.X, Velocity.Y, 0.f).Length();
 		bool isInAir = GetCharacterMovement()->IsFalling();
-		
+
 		if (Speed == 0.f && !isInAir)
 		{
 			bUseControllerRotationYaw = true;
@@ -137,6 +142,29 @@ void AShooterCharacter::ApplyTurnInPlace(float DeltaTime)
 		{
 			TurnInPlace = ETurnType::ETT_NoTurn;
 			StartingRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		}
+	}
+}
+
+void AShooterCharacter::HideCameraIfCharacterClose()
+{
+	if (IsLocallyControlled())
+	{
+		if ((Camera->GetComponentLocation() - GetActorLocation()).Size() < CameraDistanceThreshold)
+		{
+			GetMesh()->SetVisibility(false);
+			if (ShooterComponent && ShooterComponent->EquippedWeapon && ShooterComponent->EquippedWeapon->GetWeaponMesh())
+			{
+				ShooterComponent->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+			}
+		}
+		else
+		{
+			GetMesh()->SetVisibility(true);
+			if (ShooterComponent && ShooterComponent->EquippedWeapon && ShooterComponent->EquippedWeapon->GetWeaponMesh())
+			{
+				ShooterComponent->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+			}
 		}
 	}
 }
