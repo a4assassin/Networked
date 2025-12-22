@@ -62,8 +62,13 @@ protected:
 	UPROPERTY(EditAnywhere)
 	class UAnimMontage* FireAnimMontage;
 
+	UPROPERTY(EditAnywhere)
+	UAnimMontage* HitReactAnimMontage;
+
 	UFUNCTION(Server, Reliable)
 	void ServerEquip();
+
+	void PlayHitReactAnimMontage(FName HitAnimName);
 
 public:
 	AShooterCharacter();
@@ -85,6 +90,11 @@ public:
 	 
 	AWeapon* GetEquippedWeapon() const;
 
-	void PlayFire(bool isAiming);
+	void PlayFireAnimMontage(bool isAiming);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastHitReact();
+
+	
 	FVector GetHitTargetPoint() const;
 };

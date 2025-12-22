@@ -8,6 +8,8 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Particles/ParticleSystem.h"
 #include "Sound/SoundCue.h"
+#include "Networked/Characters/ShooterCharacter.h"
+#include "Networked/Networked.h"
 
 AProjectile::AProjectile()
 {
@@ -21,7 +23,7 @@ AProjectile::AProjectile()
 	BoxCollisionComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	BoxCollisionComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	BoxCollisionComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
-
+	BoxCollisionComponent->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECollisionResponse::ECR_Block);
 	ProjectileMovmentComp = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 }
 
@@ -49,6 +51,11 @@ void AProjectile::Tick(float DeltaTime)
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(OtherActor);
+	if (ShooterCharacter)
+	{
+		ShooterCharacter->MulticastHitReact();// "FromLeft");
+	}
 	Destroy();
 }
 

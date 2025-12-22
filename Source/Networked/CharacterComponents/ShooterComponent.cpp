@@ -222,7 +222,7 @@ void UShooterComponent::MulticastFire_Implementation(const FVector_NetQuantize& 
 {
 	if (ShooterCharacter && EquippedWeapon)
 	{
-		ShooterCharacter->PlayFire(isAiming);
+		ShooterCharacter->PlayFireAnimMontage(isAiming);
 		EquippedWeapon->Fire(HitLocation);
 	}
 }

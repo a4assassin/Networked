@@ -10,6 +10,7 @@
 #include "Networked/Weapons/Weapon.h"
 #include "Networked/CharacterComponents/ShooterComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Networked/Networked.h"
 
 
 AShooterCharacter::AShooterCharacter()
@@ -34,6 +35,7 @@ AShooterCharacter::AShooterCharacter()
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 
@@ -194,7 +196,7 @@ AWeapon* AShooterCharacter::GetEquippedWeapon() const
 	return ShooterComponent->EquippedWeapon;
 }
 
-void AShooterCharacter::PlayFire(bool isAiming)
+void AShooterCharacter::PlayFireAnimMontage(bool isAiming)
 {
 	if (ShooterComponent && ShooterComponent->EquippedWeapon)
 	{
@@ -206,6 +208,21 @@ void AShooterCharacter::PlayFire(bool isAiming)
 			Section = isAiming ? FName("Aim") : FName("Hip");
 			AnimInstance->Montage_JumpToSection(Section);
 		}
+	}
+}
+
+void AShooterCharacter::MulticastHitReact_Implementation()
+{
+	PlayHitReactAnimMontage(FName("FromFront"));
+}
+
+void AShooterCharacter::PlayHitReactAnimMontage(FName HitAnimName)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && HitReactAnimMontage)
+	{
+		AnimInstance->Montage_Play(HitReactAnimMontage);
+		AnimInstance->Montage_JumpToSection(HitAnimName);
 	}
 }
 
