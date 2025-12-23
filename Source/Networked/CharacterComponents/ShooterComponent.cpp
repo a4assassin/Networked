@@ -44,7 +44,7 @@ void UShooterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	{
 			FHitResult HitResult;
 			TraceHit(HitResult);
-			HitPoint = HitResult.ImpactPoint;
+			HitPoint = HitResult.ImpactPoint.IsZero() ? HitResult.TraceEnd : HitResult.ImpactPoint;
 			SetHUDCrosshairs(DeltaTime);
 			InterpFOV(DeltaTime);
 	}
